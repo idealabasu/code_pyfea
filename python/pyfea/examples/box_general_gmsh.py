@@ -8,30 +8,23 @@ import numpy as np
 import numpy
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-plt.ion()
 from mpl_toolkits.mplot3d import Axes3D
-import shapely
-import shapely.geometry as sg
 
 import idealab_tools.fea_tetra.fea as fea
 import idealab_tools.matplotlib_tools
 
+def select_tri_from_nodes(points,tris,points_filter):
+    return points_filter[tris].sum(1)==3
 
-p=  sg.Point(0,0)
-poly = p.buffer(1,resolution = 8)
-poly = sg.Polygon([(0,0),(1,0),(1,.1),(0,.1)])
-poly2= list(poly.exterior.coords)
-poly2 = poly2[:-1]
-poly2 = numpy.r_[poly2]
-poly2 = numpy.c_[poly2,poly2[:,0]*0]
-geom = pg.built_in.Geometry()
+def select_quad_from_nodes(points,quads,points_filter):
+    return points_filter[quads].sum(1)==4
 
-poly = geom.add_polygon(poly2,lcar=0.05)
+def create_t(points,quads):
+    quad_points = points[quads,:]
+    dqp = quad_points[1:] - quad_points[0]
 
-axis = [0, 0, .1]
-theta = 0
-
-geom.extrude(poly,translation_axis=axis,rotation_axis=axis,point_on_axis=[0, 0, 0], angle=theta)
+geom = pg.opencascade.Geometry(characteristic_length_max=.1, characteristic_length_min=.1)
+geom.add_box((0,0,0),(1,1,1))
 
 points, cells, point_data, cell_data, field_data = pg.generate_mesh(geom)
 triangles_outer = cells['triangle']
@@ -81,6 +74,7 @@ neumann = numpy.zeros((0,3),dtype = int)
 dirichlet_nodes = numpy.unique(dirichlet)
 neumann_nodes = numpy.unique(neumann)
 
+#heat_source_nodes = 
 #fea.plot_triangles(coordinates,triangles_outer)
 
 def u_d(x):
@@ -99,15 +93,6 @@ def u_d(x):
     W[3*aa+2] = 1e-3
     return W,M
 
-x,u = fea.compute(material,coordinates,elements,[],neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
-ax = fea.show(elements,[],triangles_outer,coordinates,u,material,factor=factor) 
+x,u = fea.compute(material,coordinates,elements,neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
+ax = fea.show(elements,triangles_outer,coordinates,u,material,factor=factor) 
 fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
-
-filename = 'cantilever_gmsh.yaml'
-
-output = {}
-output['x']=x
-output['u']=u
-
-import idealab_tools.fea_tetra.error_check as error_check
-error_check.error_check(output,filename,generate_new = False)

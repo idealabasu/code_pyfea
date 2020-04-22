@@ -41,13 +41,7 @@ theta = 0
 
 geom.extrude(poly,translation_axis=axis,rotation_axis=axis,point_on_axis=[0, 0, 0], angle=theta)
 
-mesh = pg.generate_mesh(geom)
-points = mesh.points
-cells = mesh.cells
-point_data = mesh.point_data
-cell_data = mesh.cell_data
-field_data = mesh.field_data
-#points, cells, point_data, cell_data, field_data = pg.generate_mesh(geom)
+points, cells, point_data, cell_data, field_data = pg.generate_mesh(geom)
 triangles_outer = cells['triangle']
 
 material = fea.Material(100000,.3)
@@ -57,8 +51,11 @@ f = 1e-2
 coordinates = points[:]
 elements = cells['tetra']
 
-elements,coordinates,mapping = fea.reduce_elements(elements,coordinates)
-triangles_outer = numpy.array([[mapping[key] for key in list1] for list1 in triangles_outer],dtype = int)
+used_elements = fea.find_used_elements(elements,triangles_outer)
+coordinates,mapping = fea.coord_reduce(coordinates,used_elements)
+triangles_outer = fea.element_reduce(triangles_outer,mapping)
+elements= fea.element_reduce(elements,mapping)
+
 del points
 
 a=fea.analyze(coordinates,elements)
@@ -110,8 +107,8 @@ def u_d(x):
 
 u_max = []
 C_max = []
-x,u = fea.compute(material,coordinates,elements,neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
-C = fea.max_stress(elements,coordinates, u,material)
+x,u = fea.compute(material,coordinates,elements,[],neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
+C = fea.max_stress(elements,[],coordinates, u,material)
 u_max.append([u[0::3].max(),u[2::3].max(),u[2::3].max()])
 C_max.append(C.max())
 #fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
@@ -123,6 +120,6 @@ output['x']=x
 output['u']=u
 
 import idealab_tools.fea_tetra.error_check as error_check
-#error_check.error_check(output,filename,generate_new = False)
+error_check.error_check(output,filename,generate_new = False)
         
-ax = fea.show3(elements,triangles_outer,coordinates,u,material,factor = factor) 
+#ax = fea.show3(elements,triangles_outer,coordinates,u,material,factor = factor) 

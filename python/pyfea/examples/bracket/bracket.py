@@ -26,7 +26,7 @@ factor=100
 
 
 if __name__=='__main__':
-    directory = './bracket'
+    directory = './'
 else:
     import sys
     m = sys.modules[__name__]
@@ -44,32 +44,28 @@ neumann_nodes = numpy.unique(neumann)
 
 fea.plot_triangles(coordinates,tris)
 
-x,u = fea.compute(material,coordinates,elements,neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
-ax = fea.show(elements,tris,coordinates,u,material,factor=factor) 
+x,u = fea.compute(material,coordinates,elements,[],neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
+ax = fea.show(elements,[],tris,coordinates,u,material,factor=factor) 
 fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
 
-
-filename = os.path.join(directory,'bracket.yaml')
-
-output = {}
+output= {}
 output['x']=x
-output['u']=u
 
 import idealab_tools.fea_tetra.error_check as error_check
-error_check.error_check(output,filename,generate_new = False)
-    
+import idealab_tools.data_exchange.dat
 
+#filename = os.path.join(directory,'bracket.yaml')
+#error_check.error_check(output,filename,generate_new = False)        
 
+x2 = idealab_tools.data_exchange.dat.read('results/x.dat',float)
 
+for key,value in output.items():
+    dat_filename = 'results/'+key+'.dat'
+    a = error_check.compare_matrices(value,dat_filename,tol=1e-6)
+    if a>0:
+        raise(Exception('too many errors'))
 
-#    errors = 0 
-#    import idealab_tools.fea_tetra.error_check as error_check
-#    errors += error_check.compare_matrices(b,'b.dat','results')
-#    errors += error_check.compare_matrices(B,'B_big.dat','results')
-#    errors += error_check.compare_matrices(W,'W.dat','results')
-#    errors += error_check.compare_matrices(M,'M.dat','results')
-#    errors += error_check.compare_matrices(u,'u.dat','results')
-#    errors += error_check.compare_matrices(x,'x.dat','results')
-#    errors += error_check.compare_matrices(A,'A.dat','results')
-#    print('num errors: '+str(errors))
+#import idealab_tools.plot_tris as pt
+#pt.plot_tris(xyz,triangles,verts_colors = colors, drawEdges = True, edgeColor=(0,0,0,1))
+
 

@@ -5,18 +5,18 @@ copyright 2016-2017 Dan Aukes
 
 from idealab_tools.data_exchange import dat
 import os
+import numpy
 
-def compare_matrices(A,filename,directory=None, format = float):
+def compare_matrices(A,filename,directory=None, format = float,tol = 1e-7):
     directory = directory or ''
     full_path = os.path.normpath(os.path.abspath(os.path.join(directory,filename)))
     B=dat.read(full_path,format = format)
-    return num_errors(A,B)
+    return num_errors(A,B,tol)
 
 def num_errors(a,b,tol=1e-7):
-    error = (a-b) > (abs(a).max()*tol)
+    error = numpy.abs(a-b) > ((numpy.abs(a)).max()*tol)
     num_errors = len(error.nonzero()[0])
     return num_errors
-
 
 def compare_dict(a,b,tol=1e-7):
     errors = 0

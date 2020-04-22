@@ -83,8 +83,8 @@ def u_d(x):
     return W,M
 
 #
-x,u = fea.compute(material,coordinates,elements,neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
-ax = fea.show(elements,tris,coordinates,u,material,factor=factor) 
+x,u = fea.compute(material,coordinates,elements,[],neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
+ax = fea.show(elements,[],tris,coordinates,u,material,factor=factor) 
 fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
 
 filename = 'square_plate.yaml'
@@ -94,4 +94,4 @@ output['x']=x
 output['u']=u
 
 import idealab_tools.fea_tetra.error_check as error_check
-#error_check.error_check(output,filename,generate_new = False)
+error_check.error_check(output,filename,generate_new = False)

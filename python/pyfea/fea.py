@@ -13,54 +13,115 @@ from mpl_toolkits.mplot3d import Axes3D
 import scipy.sparse
 import scipy.sparse.linalg
 import os
+import idealab_tools.data_exchange.dat as dat
+
+NDIM = 3
+NBOUNDARYNODES = 3
+
+models = ['mechanics']
 
 def volume_force_empty(x):
-    volforce = numpy.zeros((x.shape[0],3))
+    volforce = numpy.zeros((x.shape[0],NDIM))
     return volforce
 
 def surface_force_empty(x,n):
-    sforce = numpy.zeros((x.shape[0],3))
+    sforce = numpy.zeros((x.shape[0],NDIM))
     return sforce
 
 def u_d_empty(x):
     mm = x.shape[0]
-    M = numpy.zeros((3*mm,3))
-    W = numpy.zeros((3*mm,1))
-    M[0::3,0] = 1
-    M[1::3,1] = 1
-    M[2::3,2] = 1
+    M = numpy.zeros((NDIM*mm,NDIM))
+    W = numpy.zeros((NDIM*mm,1))
     return W,M
 
 def phigrad(A):
-    B = numpy.r_[numpy.zeros((1,3)),numpy.eye(3)]
+    B = numpy.r_[numpy.zeros((1,NDIM)),numpy.eye(NDIM)]
     PhiGrad = numpy.linalg.solve(A,B)
     return PhiGrad
 
-def stiffness_matrix(vertices,material):
+def stiffness_mechanics_3d(vertices,material):
     E = material.E
     nu = material.nu
     mu = material.mu
     Lambda = material.Lambda
     
-    augmented = augment(vertices)
+    if NDIM==3:
+        augmented = augment_3d(vertices)
+    elif NDIM==2:
+        augmented = augment_2d(vertices)
     PhiGrad = phigrad(augmented)
     
     R = numpy.zeros((6,12))
     R[[0,3,4],0::3] = PhiGrad.T
     R[[3,1,5],1::3] = PhiGrad.T
     R[[4,5,2],2::3] = PhiGrad.T
+
     C = numpy.zeros((6,6))
     C[:3,:3] = Lambda*numpy.ones((3,3))+2*mu*numpy.eye(3)
     C[3:,3:] = mu*numpy.eye(3)
     a = numpy.linalg.det(augmented)
     b = (R.T).dot(C.dot(R))
-#    denominator2 = scipy.linalg.division(denominator)
-#    den2= scipy.linalg.inv(den)
     stima = a*b/6
     return stima
 
-def augment(vertices):
+def stiffness_mechanics_tri_2d(vertices,material):
+    E = material.E
+    nu = material.nu
+    mu = material.mu
+    Lambda = material.Lambda
+    
+    augmented = augment_2d(vertices)
+    PhiGrad = phigrad(augmented)
+    
+    R = numpy.zeros((3,6))
+    R[[0,2],0::2] = PhiGrad.T
+    R[[2,1],1::2] = PhiGrad.T
+    
+    C = numpy.zeros((3,3))
+    C[:2,:2] = Lambda*numpy.ones((2,2))+2*mu*numpy.eye(2)
+    C[2,2] = mu
+    a = numpy.linalg.det(augmented)
+    b = (R.T).dot(C.dot(R))
+    stima = a*b/2
+    return stima
+
+def stiffness_mechanics_quad_2d(vertices,material):
+    E = material.E
+    nu = material.nu
+    mu = material.mu
+    Lambda = material.Lambda
+
+    R11 = numpy.array([[2,-2,-1,1],[-2,2,1,-1],[-1,1,2,-2],[1,-1,-2,2]])/6
+    R12 = numpy.array([[1,1,-1,-1],[-1,-1,1,1],[-1,-1,1,1],[1,1,-1,-1]])/4
+    R22 = numpy.array([[2,1,-1,-2],[1,2,-2,-1],[-1,-2,2,1],[-2,-1,1,2]])/6
+    
+    F1 = numpy.array([vertices[1,:]-vertices[0,:],vertices[3,:]-vertices[0,:]])
+    F = numpy.linalg.inv(F1)
+    
+    L = numpy.array([Lambda + 2*mu,Lambda,mu])
+    stima4 = numpy.zeros((8,8))
+
+    Lmod = numpy.array([[L[0],0],[0,L[2]]])
+    E = (F.T.dot(Lmod)).dot(F)
+    stima4[::2,::2] = E[0,0]*R11+E[0,1]*R12 + E[1,0]*(R12.T)+E[1,1]*R22
+
+    Lmod = numpy.array([[L[2],0],[0,L[0]]])
+    E = (F.T.dot(Lmod)).dot(F)
+    stima4[1::2,1::2] = E[0,0]*R11+E[0,1]*R12 + E[1,0]*(R12.T)+E[1,1]*R22
+
+    Lmod = numpy.array([[0,L[2]],[L[1],0]])
+    E = (F.T.dot(Lmod)).dot(F)
+    stima4[1::2,::2] = E[0,0]*R11+E[0,1]*R12 + E[1,0]*(R12.T)+E[1,1]*R22
+    stima4[::2,1::2] = stima4[1::2,::2].T
+    stima4/=numpy.linalg.det(F)
+    return stima4
+
+def augment_3d(vertices):
     A = numpy.r_[[[1,1,1,1]],vertices.T]
+    return A
+
+def augment_2d(vertices):
+    A = numpy.r_[[[1,1,1]],vertices.T]
     return A
 
 def analyze(coordinates,elements):
@@ -78,7 +139,10 @@ def element_max_stress(coordinates,row,u,material):
     Lambda = material.Lambda
     mu = material.mu
     vertices = coordinates[row,:]
-    augmented = augment(vertices)
+    if NDIM==3:
+        augmented = augment_3d(vertices)
+    elif NDIM==2:
+        augmented = augment_2d(vertices)
     PhiGrad = phigrad(augmented)
 
     CC = 3*numpy.c_[[1,1,1]].dot(numpy.r_[[row]])
@@ -100,8 +164,7 @@ def max_stress(elements,coordinates,u,material):
     return C
 
 def is_empty(array):
-    mm = max(array.shape)
-    return mm==0
+    return len(array)==0
 
 def element_to_nodes(coordinates,elements,val):
     mm = elements.shape[0]
@@ -113,7 +176,7 @@ def element_to_nodes(coordinates,elements,val):
     for jj,row in enumerate(elements):
         vertices = coordinates[row,:]
         
-        Area = numpy.linalg.det(augment(vertices))/6
+        Area = numpy.linalg.det(augment_3d(vertices))/6
         AreaOmega[row]+=Area
         AvC[row]+=Area*numpy.c_[[1,1,1,1]]*val[jj]
 
@@ -121,7 +184,7 @@ def element_to_nodes(coordinates,elements,val):
     AvC = AvC.squeeze()
     return AvC
         
-def show(elements,tris,coordinates,u,material,factor =100):
+def show(elements,elements4,tris,coordinates,u,material,factor =100):
     C = max_stress(elements,coordinates,u,material)
     AvC = element_to_nodes(coordinates,elements,C)   
    
@@ -185,73 +248,140 @@ def show2(elements,tris,coordinates,u,material,factor =100):
 def show3(elements,tris,coordinates,u,material,factor =100):
     xyz,tris,c_face,c_vertex = show23_int(elements,tris,coordinates,u,material,factor)
     import idealab_tools.plot_tris as pt
-    pt.plot_tris(xyz,tris,verts_colors = c_vertex, drawEdges = True)
-    
-def compute(material,coordinates,elements,neumann,dirichlet_nodes,f,g,u_d):
+    pt.plot_tris(xyz,tris,verts_colors = c_vertex)
+
+def element_to_global_3d(row):
+    I = 3*row[[0,0,0,1,1,1,2,2,2,3,3,3]] + numpy.r_[[0,1,2,0,1,2,0,1,2,0,1,2]]
+    return I
+
+def element_to_global_2d(row):
+    I = 2*row[[0,0,1,1,2,2]] + numpy.r_[[0,1,0,1,0,1]]
+    return I
+
+def quad_element_to_global_2d(row):
+    I = 2*row[[0,0,1,1,2,2,3,3]] + numpy.r_[[0,1,0,1,0,1,0,1]]
+    return I
+
+def local_to_global_3d(I):
+    kk,ll = numpy.c_[numpy.meshgrid(I,I)].transpose(0,2,1).reshape(2,-1)
+    return kk,ll
+
+
+def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,u_d):
     mm = coordinates.shape[0]
-    A = numpy.zeros((3*mm,3*mm))
-    #A = sparse.lil_matrix((3*mm,3*mm),dtype = float)
+
+    A = numpy.zeros((NDIM*mm,NDIM*mm))
+#    A = scipy.sparse.lil_matrix((NDIM*mm,NDIM*mm),dtype = float)
+#    A = scipy.sparse.csc_matrix((NDIM*mm,NDIM*mm),dtype = float)
     
-    volume_forces = numpy.zeros((3*mm,1))
+    volume_forces = numpy.zeros((NDIM*mm,1))
     
     for jj,row in enumerate(elements):
         vertices = coordinates[row,:]
-        I = 3*row[[0,0,0,1,1,1,2,2,2,3,3,3]] + numpy.r_[[0,1,2,0,1,2,0,1,2,0,1,2]]
-    
-        STIMAOUT = stiffness_matrix(vertices,material)
-        kk,ll = numpy.c_[numpy.meshgrid(I,I)].transpose(0,2,1).reshape(2,-1)
-        A[kk,ll] += STIMAOUT.flatten()
+        if NDIM==3:
+            I = element_to_global_3d(row)
+            STIMAOUT = stiffness_mechanics_3d(vertices,material)
+        elif NDIM==2:
+            I = element_to_global_2d(row)
+            STIMAOUT = stiffness_mechanics_tri_2d(vertices,material)
+
+        indeces = local_to_global_3d(I)
+        A[indeces] += STIMAOUT.flatten()
 
     #    Volume Forces
-        fs  = f(numpy.r_[[vertices.sum(0)/4]]).T
-        AAA = augment(vertices)
-        BBB = numpy.r_[fs,fs,fs,fs]/4
-        CCC = numpy.linalg.det(AAA)/6*BBB;
+        if NDIM==3:
+            fs  = f(numpy.r_[[vertices.sum(0)/4]]).T
+            AAA = augment_3d(vertices)
+            BBB = numpy.r_[fs,fs,fs,fs]/4
+            CCC = numpy.linalg.det(AAA)/6*BBB;
+        elif NDIM==2:
+            fs  = f(numpy.r_[[vertices.sum(0)/3]]).T
+            AAA = augment_2d(vertices)
+            BBB = numpy.r_[fs,fs,fs]/3
+            CCC = numpy.linalg.det(AAA)/2*BBB;
         volume_forces[I] += CCC
+
+    if NDIM==2:
+        for jj,row in enumerate(elements4):
+            vertices = coordinates[row,:]
+            I = quad_element_to_global_2d(row)
+        
+            STIMAOUT = stiffness_mechanics_quad_2d(vertices,material)
+            indeces = local_to_global_3d(I)
+            A[indeces] += STIMAOUT.flatten()
     
-    neumann_conditions = numpy.zeros((3*mm,1))
+            fs  = f(numpy.r_[[vertices.sum(0)/4]]).T
+            AAA = augment_2d(vertices[:-1,:])
+            BBB = numpy.r_[fs,fs,fs,fs]/4
+            CCC = numpy.linalg.det(AAA)*BBB;
+            volume_forces[I] += CCC
+        
+    neumann_conditions = numpy.zeros((NDIM*mm,1))
     
     if not is_empty(neumann):
-        for jj,row in enumerate(neumann):
-            n = numpy.cross( coordinates[row[1],:]-coordinates[row[0],:], 
-                             coordinates[row[2],:]-coordinates[row[0],:])
-            I = 3*row[[0,0,0,1,1,1,2,2,2]] + numpy.r_[[0,1,2,0,1,2,0,1,2]]
-            n_norm = numpy.linalg.norm(n)
-            gm = g(numpy.r_[[coordinates[row,:].sum(0)/3]],n/n_norm).T
-            neumann_conditions[I] += n_norm*numpy.r_[gm,gm,gm]/6   
+        if NDIM==2:
+            n1 = coordinates[neumann[:,1],:]-coordinates[neumann[:,0],:]
+            n2 = numpy.array([[0,-1],[1,0]])
+            n = n1.dot(n2)
+        for ii,row in enumerate(neumann):
+            if NDIM==3:
+                I = NDIM*row[[0,0,0,1,1,1,2,2,2]] + numpy.r_[[0,1,2,0,1,2,0,1,2]]
+                n = numpy.cross( coordinates[row[1],:]-coordinates[row[0],:], coordinates[row[2],:]-coordinates[row[0],:])
+                n_norm = numpy.linalg.norm(n)
+                gm = g(numpy.r_[[coordinates[row,:].sum(0)/3]],n/n_norm).T
+                neumann_conditions[I] += n_norm*(numpy.r_[gm,gm,gm]/6)   
+            elif NDIM==2:
+                I = NDIM*row[[0,0,1,1]] + numpy.r_[[0,1,0,1]]
+                n_norm = numpy.linalg.norm(n[[ii]])
+                gm = g(numpy.r_[[coordinates[row,:].sum(0)/2]],n[[ii]]/n_norm).T
+                if not not gm.nonzero()[0].tolist():
+                    jj=1
+                neumann_conditions[I] += n_norm*(numpy.r_[gm,gm]/2)   
+
+
     
     W,M = u_d(coordinates[dirichlet_nodes])
     nn = W.shape[0]
-    B = numpy.zeros((nn,3*mm))
+    B = numpy.zeros((nn,NDIM*mm))
     
-    for kk in range(3):
-        for ll in range(3):
-            MM = M[ll::3,kk]
+    for kk in range(NDIM):
+        for ll in range(NDIM):
+            MM = M[ll::NDIM,kk]
             AA = numpy.diag(MM)
-            qq = 3*dirichlet_nodes+kk
-            B[ll::3,qq] = AA
+            qq = NDIM*dirichlet_nodes+kk
+            B[ll::NDIM,qq] = AA
     
     mask2 = abs(B).sum(1)!=0
     pp = mask2.sum()
-    
+
     top = numpy.c_[A,B[mask2,:].T]
     bottom = numpy.c_[B[mask2,:],numpy.zeros((pp,pp))]
     A2 = numpy.r_[top,bottom]
     b = volume_forces+neumann_conditions
     b2 = numpy.r_[b,W[mask2]]
+
+
     A2_sparse = scipy.sparse.csc_matrix(A2)
     
     x = numpy.c_[scipy.sparse.linalg.spsolve(A2_sparse, b2)]
-    u = x[:3*mm]
+    u = x[:NDIM*mm]
     return x,u
 
-def reduce_elements(elements,coordinates):
-    used_coords = numpy.sort(numpy.unique(elements.flatten()))
+def find_used_elements(*args):
+    used_elements = numpy.concatenate([item.flatten() for item in args],0)
+    used_elements = numpy.sort(numpy.unique(used_elements))
+    return used_elements
+
+def coord_reduce(coordinates,used_coords):
+    coordinates2 = coordinates[used_coords]
     mapping = dict([(val,ii) for ii,val in enumerate(used_coords)])
-    coordinates = coordinates[used_coords]
-    elements = [[mapping[key] for key in list1] for list1 in elements]
-    elements = numpy.array(elements,dtype = int)
-    return elements,coordinates,mapping
+    return coordinates2,mapping
+
+def element_reduce(elements,mapping):
+    elements2 = [[mapping[item] for item in row] for row in elements]
+    elements3 = numpy.array(elements2,dtype = int)
+    return elements3
+
 
 def plot_tetrahedra(coordinates,elements,jj):
     tris = elements[jj,[[0,1,2],[1,2,3],[2,3,0],[3,0,1]]]
@@ -294,8 +424,6 @@ def plot_triangles_pyqtgraph(coordinates,triangles_outer):
     import idealab_tools.plot_tris as pt
     pt.plot_tris(coordinates,triangles_outer,verts_colors = (1,0,0,1))
 
-
-
 def compute_deformation(coordinates,u,factor = 1):
     uu = coordinates[:,0]+factor*u[0::3,0]
     vv = coordinates[:,1]+factor*u[1::3,0]
@@ -320,6 +448,12 @@ class Material(object):
 
     @staticmethod    
     def compute_lambda(E,nu):
-        l = E*nu/((1+nu)*(1-2*nu))
+        if NDIM==3:
+            l = E*nu/((1+nu)*(1-2*nu))
+        elif NDIM==2:
+            l= E*nu/((1+nu)*(1-2*nu))
         return l
     
+class ThermalMaterial(object):
+    def __init__(self,k):
+        self.k = k
