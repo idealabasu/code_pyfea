@@ -33,14 +33,16 @@ theta = 0
 
 geom.extrude(poly,translation_axis=axis,rotation_axis=axis,point_on_axis=[0, 0, 0], angle=theta)
 
-points, cells, point_data, cell_data, field_data = pg.generate_mesh(geom)
-triangles_outer = cells['triangle']
+#points, cells, point_data, cell_data, field_data = pg.generate_mesh(geom)
+mo = pg.generate_mesh(geom)
+
+triangles_outer = mo.cells['triangle']
 
 material = fea.Material(100000,.3)
 factor = 100
 
-coordinates = points[:]
-elements = cells['tetra']
+coordinates = mo.points[:]
+elements = mo.cells['tetra']
 
 used_elements = fea.find_used_elements(elements,triangles_outer)
 coordinates,mapping = fea.coord_reduce(coordinates,used_elements)
