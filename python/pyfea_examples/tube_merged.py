@@ -125,6 +125,15 @@ def compute(coordinates, triangles_outer, elements,youngs,poisson,density,lcar =
     u_max.append([u[0::3].max(),u[2::3].max(),u[2::3].max()])
     C_max.append(C.max())
     
+    filename = 'tube.yaml'
+
+    output = {}
+    output['x']=x
+    output['u']=u
+
+    import pyfea.error_check as error_check
+    error_check.error_check(output,filename,generate_new = False)
+
     xyz,triangles_outer,c_face,c_vertex = fea.show23_int(elements,triangles_outer,coordinates,u,material,factor)
 
     md = pgo.MeshData(vertexes = xyz,faces = triangles_outer,vertexColors = c_vertex)
