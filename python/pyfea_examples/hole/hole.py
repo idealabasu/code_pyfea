@@ -3,7 +3,7 @@
 copyright 2016-2017 Dan Aukes
 -"""
 
-import idealab_tools.fea_tetra.fea as fea
+import pyfea.fea as fea
 fea.NDIM=2
 fea.NBOUNDARYNODES=2
 from idealab_tools.data_exchange import dat
@@ -122,12 +122,12 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import matplotlib.cm
 
-import idealab_tools.fea_tetra.mesh_tools as mt
+import pyfea.mesh_tools as mt
 colors = mt.build_rgba(AvC,matplotlib.cm.gray,invert=True,normalize=True)
 
 triangles = numpy.r_[elements3,elements4[:,(0,1,2)],elements4[:,(2,3,0)]]
 
-import idealab_tools.fea_tetra.mesh_tools as mt
+import pyfea.mesh_tools as mt
 xyz = mt.convert_2d_to_3d(coordinates+factor*u.reshape((-1,2)))
 
 output= {}
@@ -142,7 +142,7 @@ output['Eps4']=Eps4
 #output['AreaOmega']=AreaOmega
 #output['AvC']=AvC
 
-import idealab_tools.fea_tetra.error_check as error_check
+import pyfea.error_check as error_check
 import idealab_tools.data_exchange.dat
 
 filename='hole.yaml'

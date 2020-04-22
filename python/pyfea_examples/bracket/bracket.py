@@ -3,7 +3,7 @@
 copyright 2016-2017 Dan Aukes
 """
 
-import idealab_tools.fea_tetra.fea as fea
+import pyfea.fea as fea
 from idealab_tools.data_exchange import dat
 import numpy
 import os
@@ -51,7 +51,7 @@ fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
 output= {}
 output['x']=x
 
-import idealab_tools.fea_tetra.error_check as error_check
+import pyfea.error_check as error_check
 import idealab_tools.data_exchange.dat
 
 #filename = os.path.join(directory,'bracket.yaml')

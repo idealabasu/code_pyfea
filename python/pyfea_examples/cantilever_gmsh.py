@@ -13,7 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import shapely
 import shapely.geometry as sg
 
-import idealab_tools.fea_tetra.fea as fea
+import pyfea.fea as fea
 import idealab_tools.matplotlib_tools
 
 
@@ -109,5 +109,5 @@ output = {}
 output['x']=x
 output['u']=u
 
-import idealab_tools.fea_tetra.error_check as error_check
+import pyfea.error_check as error_check
 error_check.error_check(output,filename,generate_new = False)

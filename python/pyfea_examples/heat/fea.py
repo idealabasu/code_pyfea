@@ -107,7 +107,7 @@ for nn in numpy.r_[1:N+1]:
 output= {}
 output['U']=U
 
-import idealab_tools.fea_tetra.error_check as error_check
+import pyfea.error_check as error_check
 import idealab_tools.data_exchange.dat
 
 for key,value in output.items():

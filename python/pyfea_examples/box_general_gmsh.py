@@ -10,7 +10,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-import idealab_tools.fea_tetra.fea as fea
+import pyfea.fea as fea
 import idealab_tools.matplotlib_tools
 
 def select_tri_from_nodes(points,tris,points_filter):

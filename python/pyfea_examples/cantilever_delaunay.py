@@ -7,7 +7,7 @@ import numpy
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import idealab_tools.fea_tetra.fea as fea
+import pyfea.fea as fea
 
 x = numpy.r_[0:1:10j]
 y = numpy.r_[0:.1:3j]
@@ -93,5 +93,5 @@ output = {}
 output['x']=x
 output['u']=u
 
-import idealab_tools.fea_tetra.error_check as error_check
+import pyfea.error_check as error_check
 error_check.error_check(output,filename,generate_new = False)

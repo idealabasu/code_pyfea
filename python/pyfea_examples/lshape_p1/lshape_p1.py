@@ -3,7 +3,7 @@
 copyright 2016-2017 Dan Aukes
 -"""
 
-import idealab_tools.fea_tetra.fea as fea
+import pyfea.fea as fea
 fea.NDIM=2
 fea.NBOUNDARYNODES=2
 from idealab_tools.data_exchange import dat
@@ -131,12 +131,12 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import matplotlib.cm
 
-import idealab_tools.fea_tetra.mesh_tools as mt
+import pyfea.mesh_tools as mt
 colors = mt.build_rgba(AvC,matplotlib.cm.gray,invert=True,normalize=True)
 
 triangles = elements3
 
-import idealab_tools.fea_tetra.mesh_tools as mt
+import pyfea.mesh_tools as mt
 xyz = mt.convert_2d_to_3d(coordinates+factor*u.reshape((-1,2)))
 
 output= {}
@@ -151,7 +151,7 @@ output['Eps3']=Eps3
 #output['AreaOmega']=AreaOmega
 #output['AvC']=AvC
 
-import idealab_tools.fea_tetra.error_check as error_check
+import pyfea.error_check as error_check
 import idealab_tools.data_exchange.dat
 
 #filename='lshape_p1.yaml'
