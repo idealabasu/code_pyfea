@@ -9,8 +9,8 @@ import os
 from idealab_tools.data_exchange.generic_data import GenericData
 
 def generate_plate():
-    geom = pg.opencascade.Geometry(characteristic_length_max=.25, characteristic_length_min=.1)
-    geom.add_box((0,0,0),(10,10,.5))
+    geom = pg.opencascade.Geometry(characteristic_length_max=.0025, characteristic_length_min=.001)
+    geom.add_box((0,0,0),(.10,.10,.005))
     mo = pg.generate_mesh(geom)
     return mo
 

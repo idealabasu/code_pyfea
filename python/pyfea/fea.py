@@ -14,6 +14,8 @@ import scipy.sparse
 import scipy.sparse.linalg
 import os
 import idealab_tools.data_exchange.dat as dat
+from pyfea.material import Material
+from pyfea.material import Material,ThermalMaterial
 
 NDIM = 3
 NBOUNDARYNODES = 3
@@ -39,82 +41,7 @@ def phigrad(A):
     PhiGrad = numpy.linalg.solve(A,B)
     return PhiGrad
 
-def stiffness_mechanics_3d(vertices,material):
-    E = material.E
-    nu = material.nu
-    mu = material.mu
-    Lambda = material.Lambda
-    
-    if NDIM==3:
-        augmented = augment_3d(vertices)
-    elif NDIM==2:
-        augmented = augment_2d(vertices)
-    PhiGrad = phigrad(augmented)
-    
-    R = numpy.zeros((6,12))
-    R[[0,3,4],0::3] = PhiGrad.T
-    R[[3,1,5],1::3] = PhiGrad.T
-    R[[4,5,2],2::3] = PhiGrad.T
 
-    C = numpy.zeros((6,6))
-    C[:3,:3] = Lambda*numpy.ones((3,3))+2*mu*numpy.eye(3)
-    C[3:,3:] = mu*numpy.eye(3)
-    a = numpy.linalg.det(augmented)
-    b = (R.T).dot(C.dot(R))
-    stima = a*b/6
-    return stima
-
-def stiffness_mechanics_tri_2d(vertices,material):
-    E = material.E
-    nu = material.nu
-    mu = material.mu
-    Lambda = material.Lambda
-    
-    augmented = augment_2d(vertices)
-    PhiGrad = phigrad(augmented)
-    
-    R = numpy.zeros((3,6))
-    R[[0,2],0::2] = PhiGrad.T
-    R[[2,1],1::2] = PhiGrad.T
-    
-    C = numpy.zeros((3,3))
-    C[:2,:2] = Lambda*numpy.ones((2,2))+2*mu*numpy.eye(2)
-    C[2,2] = mu
-    a = numpy.linalg.det(augmented)
-    b = (R.T).dot(C.dot(R))
-    stima = a*b/2
-    return stima
-
-def stiffness_mechanics_quad_2d(vertices,material):
-    E = material.E
-    nu = material.nu
-    mu = material.mu
-    Lambda = material.Lambda
-
-    R11 = numpy.array([[2,-2,-1,1],[-2,2,1,-1],[-1,1,2,-2],[1,-1,-2,2]])/6
-    R12 = numpy.array([[1,1,-1,-1],[-1,-1,1,1],[-1,-1,1,1],[1,1,-1,-1]])/4
-    R22 = numpy.array([[2,1,-1,-2],[1,2,-2,-1],[-1,-2,2,1],[-2,-1,1,2]])/6
-    
-    F1 = numpy.array([vertices[1,:]-vertices[0,:],vertices[3,:]-vertices[0,:]])
-    F = numpy.linalg.inv(F1)
-    
-    L = numpy.array([Lambda + 2*mu,Lambda,mu])
-    stima4 = numpy.zeros((8,8))
-
-    Lmod = numpy.array([[L[0],0],[0,L[2]]])
-    E = (F.T.dot(Lmod)).dot(F)
-    stima4[::2,::2] = E[0,0]*R11+E[0,1]*R12 + E[1,0]*(R12.T)+E[1,1]*R22
-
-    Lmod = numpy.array([[L[2],0],[0,L[0]]])
-    E = (F.T.dot(Lmod)).dot(F)
-    stima4[1::2,1::2] = E[0,0]*R11+E[0,1]*R12 + E[1,0]*(R12.T)+E[1,1]*R22
-
-    Lmod = numpy.array([[0,L[2]],[L[1],0]])
-    E = (F.T.dot(Lmod)).dot(F)
-    stima4[1::2,::2] = E[0,0]*R11+E[0,1]*R12 + E[1,0]*(R12.T)+E[1,1]*R22
-    stima4[::2,1::2] = stima4[1::2,::2].T
-    stima4/=numpy.linalg.det(F)
-    return stima4
 
 def augment_3d(vertices):
     A = numpy.r_[[[1,1,1,1]],vertices.T]
@@ -267,9 +194,11 @@ def local_to_global_3d(I):
     return kk,ll
 
 
-def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,u_d):
+def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,u_d,point_forces = None):
     mm = coordinates.shape[0]
 
+    point_forces = point_forces or []
+    
     A = numpy.zeros((NDIM*mm,NDIM*mm))
 #    A = scipy.sparse.lil_matrix((NDIM*mm,NDIM*mm),dtype = float)
 #    A = scipy.sparse.lil_matrix((NDIM*mm,NDIM*mm),dtype = float)
@@ -281,10 +210,10 @@ def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,
         vertices = coordinates[row,:]
         if NDIM==3:
             I = element_to_global_3d(row)
-            STIMAOUT = stiffness_mechanics_3d(vertices,material)
+            STIMAOUT = material.stiffness_mechanics_3d(vertices)
         elif NDIM==2:
             I = element_to_global_2d(row)
-            STIMAOUT = stiffness_mechanics_tri_2d(vertices,material)
+            STIMAOUT = material.stiffness_mechanics_tri_2d(vertices)
 
         indeces = local_to_global_3d(I)
         A[indeces] += STIMAOUT.flatten()
@@ -307,7 +236,7 @@ def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,
             vertices = coordinates[row,:]
             I = quad_element_to_global_2d(row)
         
-            STIMAOUT = stiffness_mechanics_quad_2d(vertices,material)
+            STIMAOUT = material.stiffness_mechanics_quad_2d(vertices)
             indeces = local_to_global_3d(I)
             A[indeces] += STIMAOUT.flatten()
     
@@ -335,11 +264,12 @@ def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,
                 I = NDIM*row[[0,0,1,1]] + numpy.r_[[0,1,0,1]]
                 n_norm = numpy.linalg.norm(n[[ii]])
                 gm = g(numpy.r_[[coordinates[row,:].sum(0)/2]],n[[ii]]/n_norm).T
-                if not not gm.nonzero()[0].tolist():
-                    jj=1
                 neumann_conditions[I] += n_norm*(numpy.r_[gm,gm]/2)   
 
-
+    point_forces_matrix = numpy.zeros(NDIM*mm)
+    for ii,f in point_forces:
+        point_forces_matrix[ii*NDIM:(ii*NDIM+NDIM)] += f
+    point_forces_matrix = numpy.array([point_forces_matrix]).T
     
     W,M = u_d(coordinates[dirichlet_nodes])
     nn = W.shape[0]
@@ -360,7 +290,7 @@ def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,
     top = numpy.c_[A,B[mask2,:].T]
     bottom = numpy.c_[B[mask2,:],numpy.zeros((pp,pp))]
     A2 = numpy.r_[top,bottom]
-    b = volume_forces+neumann_conditions
+    b = volume_forces+neumann_conditions+point_forces_matrix
     b2 = numpy.r_[b,W[mask2]]
 
 
@@ -437,26 +367,3 @@ def plot_nodes(coordinates,triangles,u,ax,factor = 100):
     xyz = compute_deformation(coordinates,u,factor)
     ax.plot3D(xyz[triangles,0],xyz[triangles,1],xyz[triangles,2],'ro')
     
-class Material(object):
-    def __init__(self,E,nu):
-        self.E = E
-        self.nu = nu
-        self.mu = self.compute_mu(E,nu)
-        self.Lambda = self.compute_lambda(E,nu)
-
-    @staticmethod    
-    def compute_mu(E,nu):
-        mu = E/(2*(1+nu))
-        return mu
-
-    @staticmethod    
-    def compute_lambda(E,nu):
-        if NDIM==3:
-            l = E*nu/((1+nu)*(1-2*nu))
-        elif NDIM==2:
-            l= E*nu/((1+nu)*(1-2*nu))
-        return l
-    
-class ThermalMaterial(object):
-    def __init__(self,k):
-        self.k = k
