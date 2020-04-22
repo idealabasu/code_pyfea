@@ -131,8 +131,8 @@ def compute(coordinates, triangles_outer, elements,youngs,poisson,density,lcar =
     output['x']=x
     output['u']=u
 
-    import pyfea.error_check as error_check
-    error_check.error_check(output,filename,generate_new = False)
+#    import pyfea.error_check as error_check
+#    error_check.error_check(output,filename,generate_new = False)
 
     xyz,triangles_outer,c_face,c_vertex = fea.show23_int(elements,triangles_outer,coordinates,u,material,factor)
 
