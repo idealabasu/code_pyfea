@@ -239,13 +239,13 @@ def show23_int(elements,tris,coordinates,u,material,factor =100):
     xyz = numpy.c_[xx,yy,zz]
     return xyz,tris,c_face,c_vertex
 
-def show2(elements,tris,coordinates,u,material,factor =100):
+def show2(elements,elements4,tris,coordinates,u,material,factor =100):
     xyz,tris,c_face,c_vertex = show23_int(elements,tris,coordinates,u,material,factor)
     import idealab_tools.plot_tris as pt
     pt.plot_tris(xyz,tris,face_colors = c_face)
 
 
-def show3(elements,tris,coordinates,u,material,factor =100):
+def show3(elements,elements4,tris,coordinates,u,material,factor =100):
     xyz,tris,c_face,c_vertex = show23_int(elements,tris,coordinates,u,material,factor)
     import idealab_tools.plot_tris as pt
     pt.plot_tris(xyz,tris,verts_colors = c_vertex)
@@ -272,9 +272,10 @@ def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,
 
     A = numpy.zeros((NDIM*mm,NDIM*mm))
 #    A = scipy.sparse.lil_matrix((NDIM*mm,NDIM*mm),dtype = float)
-#    A = scipy.sparse.csc_matrix((NDIM*mm,NDIM*mm),dtype = float)
+#    A = scipy.sparse.lil_matrix((NDIM*mm,NDIM*mm),dtype = float)
     
     volume_forces = numpy.zeros((NDIM*mm,1))
+#    volume_forces = scipy.sparse.lil_matrix((NDIM*mm,1))
     
     for jj,row in enumerate(elements):
         vertices = coordinates[row,:]
@@ -343,6 +344,8 @@ def compute(material,coordinates,elements,elements4,neumann,dirichlet_nodes,f,g,
     W,M = u_d(coordinates[dirichlet_nodes])
     nn = W.shape[0]
     B = numpy.zeros((nn,NDIM*mm))
+#    B = scipy.sparse.lil_matrix((nn,NDIM*mm))
+    
     
     for kk in range(NDIM):
         for ll in range(NDIM):

@@ -9,6 +9,7 @@ import numpy
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import yaml
 
 import pyfea.fea as fea
 import idealab_tools.matplotlib_tools
@@ -23,17 +24,46 @@ def create_t(points,quads):
     quad_points = points[quads,:]
     dqp = quad_points[1:] - quad_points[0]
 
-geom = pg.opencascade.Geometry(characteristic_length_max=.1, characteristic_length_min=.1)
-geom.add_box((0,0,0),(1,1,1))
 
-points, cells, point_data, cell_data, field_data = pg.generate_mesh(geom)
-triangles_outer = cells['triangle']
+import os
 
-material = fea.Material(100000,.3)
-factor = 100
 
-coordinates = points[:]
-elements = cells['tetra']
+def generate_mesh():
+    geom = pg.opencascade.Geometry(characteristic_length_max=.25, characteristic_length_min=.1)
+    geom.add_box((0,0,0),(10,10,.5))
+    mo = pg.generate_mesh(geom)
+    return mo
+
+def save_mesh(mo,meshname):
+    with open(meshname,'w') as f:
+        yaml.dump(mo,f)
+    
+def load_mesh(meshname):
+    with open(meshname) as f:
+        mo = yaml.load(f)
+    return mo
+
+
+meshname = 'plate.yaml'
+if os.path.exists(meshname):
+    try:
+        mo = load_mesh(meshname)
+    except Exception:
+        mo=generate_mesh()
+        save_mesh(mo,meshname)
+else:
+    mo=generate_mesh()
+    save_mesh(mo,meshname)
+
+
+triangles_outer = mo.cells['triangle']
+
+
+material = fea.Material(1e5,.3)
+factor = 1
+
+coordinates = mo.points[:]
+elements = mo.cells['tetra']
 
 used_elements = fea.find_used_elements(elements,triangles_outer)
 coordinates,mapping = fea.coord_reduce(coordinates,used_elements)
@@ -55,27 +85,36 @@ xx = coordinates[:,0]
 yy = coordinates[:,1]
 zz = coordinates[:,2]
 
-z_max = coordinates.max(0)[2]
-z_min = coordinates.min(0)[2]
-x_max = coordinates.max(0)[0]
 x_min = coordinates.min(0)[0]
+x_max = coordinates.max(0)[0]
+y_min = coordinates.min(0)[1]
+y_max = coordinates.max(0)[1]
+z_min = coordinates.min(0)[2]
+z_max = coordinates.max(0)[2]
 
-
-
-ii_bottom = ((coordinates[triangles_outer,0]==x_min).sum(1)==3)
-ii_top = ((coordinates[triangles_outer,0]==x_max).sum(1)==3)
+ii_tri_x_minus = ((coordinates[triangles_outer,0]==x_min).sum(1)==3)
+ii_tri_x_plus = ((coordinates[triangles_outer,0]==x_max).sum(1)==3)
+ii_tri_y_minus = ((coordinates[triangles_outer,1]==y_min).sum(1)==3)
+ii_tri_y_plus = ((coordinates[triangles_outer,1]==y_max).sum(1)==3)
+ii_tri_z_minus = ((coordinates[triangles_outer,2]==z_min).sum(1)==3)
+ii_tri_z_plus = ((coordinates[triangles_outer,2]==z_max).sum(1)==3)
 #ii_neumann = (ii_bottom+ii_top)==0
-dirichlet_bottom = triangles_outer[ii_bottom]
-dirichlet_top = triangles_outer[ii_top]
-dirichlet = numpy.r_[dirichlet_bottom,dirichlet_top]
+
+constrained_tris = triangles_outer[ii_tri_x_minus|ii_tri_x_plus]
+constrained_nodes = numpy.unique(constrained_tris)
 
 neumann = numpy.zeros((0,3),dtype = int)
-
-dirichlet_nodes = numpy.unique(dirichlet)
 neumann_nodes = numpy.unique(neumann)
 
 #heat_source_nodes = 
 #fea.plot_triangles(coordinates,triangles_outer)
+
+
+def volume_force(x):
+    density = 1000
+    volforce = numpy.zeros((x.shape[0],3))
+    volforce[:,2] = -9.81
+    return volforce    
 
 def u_d(x):
     mm = x.shape[0]
@@ -90,9 +129,16 @@ def u_d(x):
     M[3*bb+2,2] = 1
 
     M[3*aa+2,2] = 1
-    W[3*aa+2] = 1e-3
+    W[3*aa+2] = 1e-1
     return W,M
 
-x,u = fea.compute(material,coordinates,elements,neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
-ax = fea.show(elements,triangles_outer,coordinates,u,material,factor=factor) 
-fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
+elements4 = []
+
+x,u = fea.compute(material,coordinates,elements,elements4,neumann,constrained_nodes,volume_force,fea.surface_force_empty,u_d)
+ax = fea.show3(elements,elements4,triangles_outer,coordinates,u,material,factor=factor) 
+
+#fig = plt.figure()
+#ax = fig.add_subplot(111, projection='3d')
+#fea.plot_nodes(coordinates,constrained_nodes,u,ax,factor)
+#xyz = fea.compute_deformation(coordinates,u,factor)
+#idealab_tools.matplotlib_tools.equal_axes(ax,xyz)
