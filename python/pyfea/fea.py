@@ -172,10 +172,10 @@ def show2(elements,elements4,tris,coordinates,u,material,factor =100):
     pt.plot_tris(xyz,tris,face_colors = c_face)
 
 
-def show3(elements,elements4,tris,coordinates,u,material,factor =100):
+def show3(elements,elements4,tris,coordinates,u,material,factor =100,**kwargs):
     xyz,tris,c_face,c_vertex = show23_int(elements,tris,coordinates,u,material,factor)
     import idealab_tools.plot_tris as pt
-    pt.plot_tris(xyz,tris,verts_colors = c_vertex)
+    pt.plot_tris(xyz,tris,verts_colors = c_vertex,**kwargs)
 
 def element_to_global_3d(row):
     I = 3*row[[0,0,0,1,1,1,2,2,2,3,3,3]] + numpy.r_[[0,1,2,0,1,2,0,1,2,0,1,2]]

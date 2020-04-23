@@ -44,7 +44,7 @@ def generate_geometry(l,d1_outer,d2_outer,d1_inner,d2_inner,char_len_min = .1,ch
     triangles_outer = mo.cells['triangle']
     #face_colors = [(1,0,0,1)]*len(triangles_outer)
     #face_colors = numpy.array(face_colors)
-    #idealab_tools.plot_tris.plot_tris(points,triangles_outer,face_colors = face_colors,drawEdges=True, edgeColor = (1,1,1,1))
+    #idealab_tools.plot_tris.plot_tris(points,triangles_outer,face_colors = face_colors,drawEdges=True, edge_color = (1,1,1,1))
 #    youngs,poisson=1e5,1e-2
     
 

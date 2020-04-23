@@ -155,7 +155,7 @@ filename='hole.yaml'
 #        raise(Exception('too many errors'))
 
 import idealab_tools.plot_tris as pt
-pt.plot_tris(xyz,triangles,verts_colors = colors, drawEdges = True, edgeColor=(0,0,0,1))
+pt.plot_tris(xyz,triangles,verts_colors = colors, draw_edges = True, edge_color=(0,0,0,1))
 
 
 
