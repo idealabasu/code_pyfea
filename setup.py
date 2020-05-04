@@ -16,6 +16,7 @@ shutil.rmtree("build", ignore_errors=True)
 shutil.rmtree("dist", ignore_errors=True)
 
 #import pydevtools.empty_project
+import pyfea_examples
 import importlib
 #script = 'pydevtools.empty_project.empty_main_widget'
 script = 'pyfea_design_tool.design_tool'
@@ -27,15 +28,22 @@ script2 = script_path.__file__
 #program_file = 'empty_main_widget.py'
 #script2 = st.fix(program_base_dir,program_file)
 
+package_data = {}
+package_data['pyfea_design_tool'] = ['files/*']
+
+
 packages = []
+packages.append('pyfea')
+packages.append('pyfea_examples')
+packages.append('pyfea_examples.tube')
+packages.append('pyfea_design_tool')
+
 #packages.append('pydevtools.empty_project')
 #packages.append("scipy")
 #packages.append("scipy.sparse.csgraph._validation")
 #packages.append('numpy')
 #packages.append("scipy")
-packages.append('pyqtgraph')
-packages.append('OpenGL')
-packages.append('meshio')
+#packages.append('pyfea_examples')
 #python_installed_directory = dirname(sys.executable)
 
 zip_includes = []
@@ -43,10 +51,20 @@ include_files = []
 includes = []
 excludes = []
 
+includes.append('pyfea')
+includes.append('pyfea_examples')
+packages.append('pyfea_examples.tube')
+includes.append('pyfea_design_tool')
+includes.append('OpenGL')
+includes.append('meshio')
 includes.append('pyqtgraph')
 includes.append('pyqtgraph.debug')
 includes.append('numpy.core._methods')
 includes.append("scipy.sparse.csgraph._validation")
+includes.append('pyqtgraph.ThreadsafeTimer')
+includes.append('pyqtgraph.opengl.shaders')
+#includes.append('mpl_toolkits')
+
 #includes.append("scipy.spatial.ckdtree")
 #includes.append("scipy.integrate.vode")
 #includes.append("scipy.integrate.lsoda")
@@ -54,10 +72,11 @@ includes.append("scipy.sparse.csgraph._validation")
 include_files.append((st.fix(st.python_installed_directory,'Library/bin/geos_c.dll'),'Library/bin/geos_c.dll'))
 include_files.append((st.fix(st.python_installed_directory,'Library/bin/geos.dll'),'Library/bin/geos.dll'))
 #necessary for qt5
-include_files.extend(st.include_entire_directory('C:\\Miniconda3\\Library\\plugins\\platforms',''))
+include_files.extend(st.include_entire_directory(st.fix(st.python_installed_directory,'Library\\plugins\\platforms'),''))
 #include_files.append(('C:\\bin\\gmsh\\gmsh.exe',''))
-include_files.append(('C:\\Users\\daukes\\scripts\\gmsh.exe',''))
-include_files.extend(st.include_entire_directory('C:\\Miniconda3\\Library\\bin',''))
+#include_files.append(('C:\\Users\\daukes\\scripts\\gmsh.exe',''))
+include_files.append(('C:\\bin\\gmsh.exe',''))
+include_files.extend(st.include_entire_directory(st.fix(st.python_installed_directory,'Library\\bin'),''))
 
 #include_files.extend(st.include_entire_directory('C:\\Users\\daukes\\code\\pydevtools\\pydevtools\\empty_project\\files','files'))
 #include_files.extend(include_entire_directory('C:\\Miniconda3\\tcl',''))
@@ -133,7 +152,7 @@ exe = Executable(script = script2,
                  base=base,
                  shortcutName=program_name,
                  shortcutDir="ProgramMenuFolder",
-#                 icon=os.path.join(st.abs_user_path(),'code\\idealab_tools\\support\\logo_4_1_icon.ico'),
+                 icon = 'python/pyfea_design_tool/files/logo_4_1_icon.ico', # if you want to use an icon file, specify the file name here
                  )
 
 
@@ -148,6 +167,7 @@ setup_arguments['version'] = '0.0.2'
 setup_arguments['description'] = 'FEA-based design tool'
 setup_arguments['executables'] = executables
 setup_arguments['options'] = setup_options
+setup_arguments['package_data'] = package_data
 
 # patch to set environment variable for tcl and tk libraries
 module = importlib.import_module('tcl')

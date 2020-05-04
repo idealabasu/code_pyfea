@@ -7,9 +7,9 @@ copyright 2016-2017 Dan Aukes
 import numpy
 numpy.set_printoptions(precision = 3)
 import matplotlib.cm as cm
-import matplotlib.pyplot as plt
-plt.ion()
-from mpl_toolkits.mplot3d import Axes3D
+#import matplotlib.pyplot as plt
+#plt.ion()
+#from mpl_toolkits.mplot3d import Axes3D
 import scipy.sparse
 import scipy.sparse.linalg
 import os
@@ -111,36 +111,36 @@ def element_to_nodes(coordinates,elements,val):
     AvC = AvC.squeeze()
     return AvC
         
-def show(elements,elements4,tris,coordinates,u,material,factor =100):
-    C = max_stress(elements,coordinates,u,material)
-    AvC = element_to_nodes(coordinates,elements,C)   
-   
-    cmap = cm.Spectral
-
-    c_face = (AvC[tris]).sum(1)/3
-    c_face -= c_face.min()
-    c_face /= c_face.max()
-    c_face = 1-c_face
-    c_face = cmap(c_face)
-
-    xx = factor*u[0::3,0]+coordinates[:,0]
-    yy = factor*u[1::3,0]+coordinates[:,1]
-    zz = factor*u[2::3,0]+coordinates[:,2]
-    xyz = numpy.c_[xx,yy,zz]
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ts = ax.plot_trisurf(xx,yy,zz,triangles = tris)
-    ts.set_facecolors(c_face)
-    plt.show()
-    import idealab_tools.matplotlib_tools
-    idealab_tools.matplotlib_tools.equal_axes(ax,xyz)
-
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
-    
-    return ax
+#def show(elements,elements4,tris,coordinates,u,material,factor =100):
+#    C = max_stress(elements,coordinates,u,material)
+#    AvC = element_to_nodes(coordinates,elements,C)   
+#   
+#    cmap = cm.Spectral
+#
+#    c_face = (AvC[tris]).sum(1)/3
+#    c_face -= c_face.min()
+#    c_face /= c_face.max()
+#    c_face = 1-c_face
+#    c_face = cmap(c_face)
+#
+#    xx = factor*u[0::3,0]+coordinates[:,0]
+#    yy = factor*u[1::3,0]+coordinates[:,1]
+#    zz = factor*u[2::3,0]+coordinates[:,2]
+#    xyz = numpy.c_[xx,yy,zz]
+#
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111, projection='3d')
+#    ts = ax.plot_trisurf(xx,yy,zz,triangles = tris)
+#    ts.set_facecolors(c_face)
+#    plt.show()
+#    import idealab_tools.matplotlib_tools
+#    idealab_tools.matplotlib_tools.equal_axes(ax,xyz)
+#
+#    ax.set_xlabel('x')
+#    ax.set_ylabel('y')
+#    ax.set_zlabel('z')
+#    
+#    return ax
 
 def show23_int(elements,tris,coordinates,u,material,factor =100):    
     C = max_stress(elements,coordinates,u,material)
@@ -316,21 +316,21 @@ def element_reduce(elements,mapping):
     return elements3
 
 
-def plot_tetrahedra(coordinates,elements,jj):
-    tris = elements[jj,[[0,1,2],[1,2,3],[2,3,0],[3,0,1]]]
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ts = ax.plot_trisurf(coordinates[:,0],coordinates[:,1],coordinates[:,2],triangles = tris)
-    ts.set_facecolor((1,0,0,.1))
-    ts.set_edgecolor((0,0,0,1))
-    plt.show()
-    
-    import idealab_tools.matplotlib_tools
-    idealab_tools.matplotlib_tools.equal_axes(ax,coordinates[tris].reshape((-1,3)))
-
-    for ii,item in enumerate(coordinates[elements[jj]]):
-        ax.text3D(*item,s=str(ii))
+#def plot_tetrahedra(coordinates,elements,jj):
+#    tris = elements[jj,[[0,1,2],[1,2,3],[2,3,0],[3,0,1]]]
+#
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111, projection='3d')
+#    ts = ax.plot_trisurf(coordinates[:,0],coordinates[:,1],coordinates[:,2],triangles = tris)
+#    ts.set_facecolor((1,0,0,.1))
+#    ts.set_edgecolor((0,0,0,1))
+#    plt.show()
+#    
+#    import idealab_tools.matplotlib_tools
+#    idealab_tools.matplotlib_tools.equal_axes(ax,coordinates[tris].reshape((-1,3)))
+#
+#    for ii,item in enumerate(coordinates[elements[jj]]):
+#        ax.text3D(*item,s=str(ii))
 
 def fix_tet_order(xyz,quad):        
     a=analyze(xyz,quad)
@@ -344,14 +344,14 @@ def remove_zero_volume(xyz,quad):
     quad = quad[dt!=0]
     return quad
 
-def plot_triangles(coordinates,triangles_outer):
-    import idealab_tools.matplotlib_tools
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot_trisurf(*coordinates.T,triangles = triangles_outer)
-    idealab_tools.matplotlib_tools.equal_axes(ax,coordinates)
-    plt.show()
-    return ax
+#def plot_triangles(coordinates,triangles_outer):
+#    import idealab_tools.matplotlib_tools
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111, projection='3d')
+#    ax.plot_trisurf(*coordinates.T,triangles = triangles_outer)
+#    idealab_tools.matplotlib_tools.equal_axes(ax,coordinates)
+#    plt.show()
+#    return ax
 
 def plot_triangles_pyqtgraph(coordinates,triangles_outer):
     import idealab_tools.plot_tris as pt
