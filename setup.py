@@ -53,7 +53,7 @@ excludes = []
 
 includes.append('pyfea')
 includes.append('pyfea_examples')
-packages.append('pyfea_examples.tube')
+includes.append('pyfea_examples.tube')
 includes.append('pyfea_design_tool')
 includes.append('OpenGL')
 includes.append('meshio')
