@@ -7,6 +7,14 @@ from idealab_tools.data_exchange import dat
 import os
 import numpy
 
+def compare_output(output,folder):
+    for key,value in output.items():
+        dat_filename = os.path.join(folder,key+'.dat')
+        a = compare_matrices(value,dat_filename)
+        if a>0:
+            raise(Exception('too many errors'))
+
+
 def compare_matrices(A,filename,directory=None, format = float,tol = 1e-7):
     directory = directory or ''
     full_path = os.path.normpath(os.path.abspath(os.path.join(directory,filename)))
