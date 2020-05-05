@@ -141,6 +141,10 @@ def compute(coordinates, triangles_outer, elements,youngs,poisson,density,lcar =
     return mi,C.max()
 #        ax = fea.show3(elements,triangles_outer,coordinates,u,material,factor = factor)
 
+def run():
+    coordinates, triangles_outer,elements  = generate_geometry(1,.4,.2,.2,.1)
+    mi,C_max = compute(coordinates, triangles_outer,elements,1e5,1e-2,1000)
+
 if __name__=='__main__':
     coordinates, triangles_outer,elements  = generate_geometry(1,.4,.2,.2,.1)
     mi,C_max = compute(coordinates, triangles_outer,elements,1e5,1e-2,1000)
