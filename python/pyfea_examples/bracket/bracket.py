@@ -55,13 +55,15 @@ import idealab_tools.data_exchange.dat
 #filename = os.path.join(directory,'bracket.yaml')
 #error_check.error_check(output,filename,generate_new = False)        
 
-x2 = idealab_tools.data_exchange.dat.read('results/x.dat',float)
+#x2 = idealab_tools.data_exchange.dat.read('results/x.dat',float)
 
-for key,value in output.items():
-    dat_filename = 'results/'+key+'.dat'
-    a = error_check.compare_matrices(value,dat_filename,tol=1e-6)
-    if a>0:
-        raise(Exception('too many errors'))
+#for key,value in output.items():
+#    dat_filename = 'results/'+key+'.dat'
+#    a = error_check.compare_matrices(value,dat_filename,tol=1e-6)
+#    if a>0:
+#        raise(Exception('too many errors'))
+
+error_check.compare_output(output,'results')
 
 #import idealab_tools.plot_tris as pt
 #pt.plot_tris(xyz,triangles,verts_colors = colors, draw_edges = True, edge_color=(0,0,0,1))

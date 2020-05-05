@@ -110,11 +110,12 @@ output['U']=U
 import pyfea.error_check as error_check
 import idealab_tools.data_exchange.dat
 
-for key,value in output.items():
-    dat_filename = 'results/'+key+'.dat'
-    a = error_check.compare_matrices(value,dat_filename)
-    if a>0:
-        raise(Exception('too many errors'))
+#for key,value in output.items():
+#    dat_filename = 'results/'+key+'.dat'
+#    a = error_check.compare_matrices(value,dat_filename)
+#    if a>0:
+#        raise(Exception('too many errors'))
+error_check.compare_output(output,'results')
 
 uu = U[:,-1]
 coordinates3 = numpy.c_[coordinates,uu]

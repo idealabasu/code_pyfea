@@ -130,11 +130,12 @@ import idealab_tools.data_exchange.dat
 #filename='cooks.yaml'
 #error_check.error_check(output,filename,generate_new = False)        
 
-for key,value in output.items():
-    dat_filename = 'results/'+key+'.dat'
-    a = error_check.compare_matrices(value,dat_filename)
-    if a>0:
-        raise(Exception('too many errors'))
+#for key,value in output.items():
+#    dat_filename = 'results/'+key+'.dat'
+#    a = error_check.compare_matrices(value,dat_filename)
+#    if a>0:
+#        raise(Exception('too many errors'))
+error_check.compare_output(output,'results')
 
 import idealab_tools.plot_tris as pt
 pt.plot_tris(xyz,triangles,verts_colors = colors, draw_edges = True, edge_color=(0,0,0,1))
