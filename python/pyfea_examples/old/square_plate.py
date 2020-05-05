@@ -84,8 +84,6 @@ def u_d(x):
 
 #
 x,u = fea.compute(material,coordinates,elements,[],neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
-ax = fea.show(elements,[],tris,coordinates,u,material,factor=factor) 
-fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
 
 filename = 'square_plate.yaml'
 
@@ -95,3 +93,6 @@ output['u']=u
 
 import pyfea.error_check as error_check
 error_check.error_check(output,filename,generate_new = False)
+
+ax = fea.show(elements,[],tris,coordinates,u,material,factor=factor) 
+fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)

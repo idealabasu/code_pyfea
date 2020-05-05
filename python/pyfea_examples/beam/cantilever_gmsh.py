@@ -102,8 +102,7 @@ def u_d(x):
     return W,M
 
 x,u = fea.compute(material,coordinates,elements,[],neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
-ax = fea.show(elements,[],triangles_outer,coordinates,u,material,factor=factor) 
-fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
+#fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
 
 filename = 'cantilever_gmsh.yaml'
 
@@ -113,3 +112,5 @@ output['u']=u
 
 import pyfea.error_check as error_check
 error_check.error_check(output,filename,generate_new = False)
+
+fea.show3(elements,[],triangles_outer,coordinates,u,material,factor=factor) 

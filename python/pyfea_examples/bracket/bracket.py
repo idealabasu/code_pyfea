@@ -34,19 +34,17 @@ else:
 
 
 coordinates = dat.read(os.path.join(directory,'coordinates.dat'),float)
-elements = dat.read(os.path.join(directory,'elements.dat'),int) - 1
-dirichlet = dat.read(os.path.join(directory,'dirichlet.dat'),int) - 1
-neumann = dat.read(os.path.join(directory,'neumann.dat'),int) - 1
+elements = numpy.array(dat.read(os.path.join(directory,'elements.dat'),int) - 1,dtype = numpy.int)
+dirichlet = numpy.array(dat.read(os.path.join(directory,'dirichlet.dat'),int) - 1,dtype = numpy.int)
+neumann = numpy.array(dat.read(os.path.join(directory,'neumann.dat'),int) - 1,dtype = numpy.int)
 tris = numpy.r_[dirichlet,neumann]
 
 dirichlet_nodes = numpy.unique(dirichlet)
 neumann_nodes = numpy.unique(neumann)
 
-fea.plot_triangles(coordinates,tris)
+#fea.plot_triangles(coordinates,tris)
 
 x,u = fea.compute(material,coordinates,elements,[],neumann,dirichlet_nodes,fea.volume_force_empty,fea.surface_force_empty,u_d)
-ax = fea.show(elements,[],tris,coordinates,u,material,factor=factor) 
-fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)
 
 output= {}
 output['x']=x
@@ -67,5 +65,7 @@ for key,value in output.items():
 
 #import idealab_tools.plot_tris as pt
 #pt.plot_tris(xyz,triangles,verts_colors = colors, draw_edges = True, edge_color=(0,0,0,1))
-
-
+#
+#
+ax = fea.show3(elements,[],tris,coordinates,u,material,factor=factor) 
+#fea.plot_nodes(coordinates,dirichlet_nodes,u,ax,factor)

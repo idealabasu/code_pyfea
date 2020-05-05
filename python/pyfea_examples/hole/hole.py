@@ -46,10 +46,10 @@ def surface_force(x,n):
     return sforce
 
 coordinates = dat.read(os.path.join(directory,'coordinates.dat'),float)
-elements3 = dat.read(os.path.join(directory,'elements3.dat'),int) - 1
-elements4 = dat.read(os.path.join(directory,'elements4.dat'),int) - 1
-dirichlet = dat.read(os.path.join(directory,'dirichlet.dat'),int) - 1
-neumann = dat.read(os.path.join(directory,'neumann.dat'),int) - 1
+elements3 = numpy.array(dat.read(os.path.join(directory,'elements3.dat'),int) - 1,dtype=numpy.int)
+elements4 = numpy.array(dat.read(os.path.join(directory,'elements4.dat'),int) - 1,dtype=numpy.int)
+dirichlet = numpy.array(dat.read(os.path.join(directory,'dirichlet.dat'),int) - 1,dtype=numpy.int)
+neumann = numpy.array(dat.read(os.path.join(directory,'neumann.dat'),int) - 1,dtype=numpy.int)
 tris = numpy.r_[dirichlet,neumann]
 
 dirichlet_nodes = numpy.unique(dirichlet)
@@ -145,14 +145,14 @@ output['Eps4']=Eps4
 import pyfea.error_check as error_check
 import idealab_tools.data_exchange.dat
 
-filename='hole.yaml'
+#filename='hole.yaml'
 #error_check.error_check(output,filename,generate_new = False)        
 #
-#for key,value in output.items():
-#    dat_filename = 'results/'+key+'.dat'
-#    a = error_check.compare_matrices(value,dat_filename)
-#    if a>0:
-#        raise(Exception('too many errors'))
+for key,value in output.items():
+    dat_filename = 'results/'+key+'.dat'
+    a = error_check.compare_matrices(value,dat_filename)
+    if a>0:
+        raise(Exception('too many errors'))
 
 import idealab_tools.plot_tris as pt
 pt.plot_tris(xyz,triangles,verts_colors = colors, draw_edges = True, edge_color=(0,0,0,1))

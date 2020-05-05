@@ -14,6 +14,8 @@ def compare_matrices(A,filename,directory=None, format = float,tol = 1e-7):
     return num_errors(A,B,tol)
 
 def num_errors(a,b,tol=1e-7):
+#    a = numpy.array(a)
+#    b = numpy.array(b)
     error = numpy.abs(a-b) > ((numpy.abs(a)).max()*tol)
     num_errors = len(error.nonzero()[0])
     return num_errors
@@ -31,15 +33,15 @@ def error_check(output,filename,generate_new = False):
     
     if generate_new:
         with open(filename,'w') as f:
-#            for key,value in output.items():
-#                output[key] = output[key].tolist()
+            for key,value in output.items():
+                output[key] = output[key].tolist()
             yaml.dump(output,f)
     else:
     
         with open(filename) as f:
             baseline = yaml.load(f)
-#            for key,value in baseline.items():
-#                baseline[key] = numpy.array(baseline[key])
+            for key,value in baseline.items():
+                baseline[key] = numpy.array(baseline[key])
         
         if compare_dict(output,baseline)>0:
             raise(Exception('too many errors'))

@@ -33,10 +33,10 @@ def surface_force(x,n):
     return sforce
 
 coordinates = dat.read(os.path.join(directory,'coordinates.dat'),float)
-elements3 = dat.read(os.path.join(directory,'elements3.dat'),int) - 1
+elements3 = numpy.array(dat.read(os.path.join(directory,'elements3.dat'),int) - 1,dtype = numpy.int)
 elements4 = numpy.zeros((0,4))
-dirichlet = dat.read(os.path.join(directory,'dirichlet.dat'),int) - 1
-neumann = dat.read(os.path.join(directory,'neumann.dat'),int) - 1
+dirichlet = numpy.array(dat.read(os.path.join(directory,'dirichlet.dat'),int) - 1,dtype = numpy.int)
+neumann = numpy.array(dat.read(os.path.join(directory,'neumann.dat'),int) - 1,dtype = numpy.int)
 tris = numpy.r_[dirichlet,neumann]
 
 dirichlet_nodes = numpy.unique(dirichlet)
@@ -53,11 +53,6 @@ Sigma4 = numpy.zeros((elements4.shape[0],4))
 AreaOmega = numpy.zeros((coordinates.shape[0],1))
 AvS = numpy.zeros((coordinates.shape[0],4))
 AvE = numpy.zeros((coordinates.shape[0],4))
-
-
-
-
-
 
 for jj,row in enumerate(elements3):
     augmented = fea.augment_2d(coordinates[row])

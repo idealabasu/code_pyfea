@@ -118,5 +118,7 @@ for key,value in output.items():
 
 uu = U[:,-1]
 coordinates3 = numpy.c_[coordinates,uu]
-vc = cm.jet(uu[:,-1])
-#idealab_tools.plot_tris.plot_tris(coordinates3,elements3,verts_colors = vc,draw_edges = True,edge_color=(0,0,0,1))
+vc = numpy.array([cm.jet(item) for item in uu])
+#idealab_tools.plot_tris.plot_tris(coordinates3,elements3,face_colors = (1,0,0,1), draw_edges = True,edge_color=(0,0,0,1))
+idealab_tools.plot_tris.plot_tris(coordinates3,elements3,verts_colors = vc, draw_edges = True,edge_color=(0,0,0,1))
+

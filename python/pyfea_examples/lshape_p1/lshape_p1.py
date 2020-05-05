@@ -55,9 +55,9 @@ def surface_force(x,n):
     return sforce
 
 coordinates = dat.read(os.path.join(directory,'coordinates.dat'),float)
-elements3 = dat.read(os.path.join(directory,'elements3.dat'),int) - 1
+elements3 = numpy.array(dat.read(os.path.join(directory,'elements3.dat'),int) - 1,dtype = numpy.int)
 elements4 = numpy.zeros((0,4))
-dirichlet = dat.read(os.path.join(directory,'dirichlet.dat'),int) - 1
+dirichlet = numpy.array(dat.read(os.path.join(directory,'dirichlet.dat'),int) - 1,dtype = numpy.int)
 neumann = numpy.zeros((0,2))
 tris = numpy.r_[dirichlet,neumann]
 
@@ -75,10 +75,6 @@ Sigma4 = numpy.zeros((elements4.shape[0],4))
 AreaOmega = numpy.zeros((coordinates.shape[0],1))
 AvS = numpy.zeros((coordinates.shape[0],4))
 AvE = numpy.zeros((coordinates.shape[0],4))
-
-
-
-
 
 
 for jj,row in enumerate(elements3):
@@ -163,8 +159,8 @@ for key,value in output.items():
     if a>0:
         raise(Exception('too many errors'))
 
-#import idealab_tools.plot_tris as pt
-#pt.plot_tris(xyz,triangles,verts_colors = colors, draw_edges = True, edge_color=(0,0,0,1))
+import idealab_tools.plot_tris as pt
+pt.plot_tris(xyz,triangles,verts_colors = colors, draw_edges = True, edge_color=(0,0,0,1))
 
 
 
