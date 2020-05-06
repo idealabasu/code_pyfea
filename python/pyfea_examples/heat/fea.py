@@ -41,18 +41,12 @@ def DirichletBoundaryValue(x,t):
 
 coordinates = dat.read(os.path.join(directory,'coordinates.dat'),float)
 coordinates = coordinates[:,1:]
-elements3 = dat.read(os.path.join(directory,'elements3.dat'),float)
-elements3 = numpy.array(elements3,dtype=int)
+elements3 = numpy.array(dat.read(os.path.join(directory,'elements3.dat'),float),dtype=numpy.int) - 1
 elements3 = elements3[:,1:]
-elements3 -=1
-dirichlet = dat.read(os.path.join(directory,'dirichlet.dat'),float)
-dirichlet = numpy.array(dirichlet,dtype=int)
+dirichlet = numpy.array(dat.read(os.path.join(directory,'dirichlet.dat'),float),dtype = numpy.int) - 1
 dirichlet = dirichlet[:,1:]
-dirichlet -=1
-neumann = dat.read(os.path.join(directory,'neumann.dat'),float) - 1
-neumann = numpy.array(neumann ,dtype=int)
+neumann = numpy.array(dat.read(os.path.join(directory,'neumann.dat'),float),dtype = numpy.int) - 1
 neumann = neumann[:,1:]
-neumann -=1
 
 m = coordinates.shape[0]
 
