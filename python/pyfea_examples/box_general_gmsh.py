@@ -145,7 +145,7 @@ u3 = u.reshape((int(len(u)/3),3))
 d = ((u3**2).sum(1))**.5
 d_max = d.max()
 print(d_max)
-ax = fea.show3(elements,elements4,triangles_outer,coordinates,u,material,factor=factor) 
+fea.show3(elements,elements4,triangles_outer,coordinates,u,material,factor=factor) 
 
 #fig = plt.figure()
 #ax = fig.add_subplot(111, projection='3d')

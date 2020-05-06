@@ -11,6 +11,9 @@ from idealab_tools.data_exchange import dat
 import idealab_tools.plot_tris
 import matplotlib.cm as cm
 directory = ''
+import pyfea.fea as fea
+fea.NDIM=2
+fea.NBOUNDARYNODES=2
 
 #def VolumeForce(x,t):
 #    VolumeForce = numpy.zeros((1,1))
@@ -48,15 +51,15 @@ def localdj(vertices,U):
     G = numpy.linalg.solve(gdem,gnum)
     Area = numpy.linalg.det(gdem)/ 2;
     fac1 = numpy.array([[2,1,1],[1,2,1],[1,1,2]])/12 
-    fac2 = numpy.array([[12*U[0]**2+2*(U[1]**2+U[2]**2+U[1]*U[2])+6*U[0]*(U[1]+U[2]), 
-    3*(U[0]**2+U[1]**2)+U[2]**2+4*U[0]*U[1]+2*U[2]*(U[0]+U[1]),
-    3*(U[0]**2+U[2]**2)+U[1]**2+4*U[0]*U[2]+2*U[1]*(U[0]+U[2])],
-    [3*(U[0]**2+U[1]**2)+U[2]**2+4*U[0]*U[1]+2*U[2]*(U[0]+U[1]),
-    12*U[1]**2+2*(U[0]**2+U[2]**2+U[0]*U[2])+6*U[1]*(U[0]+U[2]),
-    3*(U[1]**2+U[2]**2)+U[0]**2+4*U[1]*U[2]+2*U[0]*(U[1]+U[2])],
-    [3*(U[0]**2+U[2]**2)+U[1]**2+4*U[0]*U[2]+2*U[1]*(U[0]+U[2]),
-    3*(U[1]**2+U[2]**2)+U[0]**2+4*U[1]*U[2]+2*U[0]*(U[1]+U[2]),
-    12*U[2]**2+2*(U[0]**2+U[1]**2+U[0]*U[1])+6*U[2]*(U[0]+U[1])]])/60
+    fac2 = numpy.array([[12*U[1-1]**2+2*(U[2-1]**2+U[3-1]**2+U[2-1]*U[3-1])+6*U[1-1]*(U[2-1]+U[3-1]),
+      3*(U[1-1]**2+U[2-1]**2)+U[3-1]**2+4*U[1-1]*U[2-1]+2*U[3-1]*(U[1-1]+U[2-1]),
+      3*(U[1-1]**2+U[3-1]**2)+U[2-1]**2+4*U[1-1]*U[3-1]+2*U[2-1]*(U[1-1]+U[3-1])],
+  [3*(U[1-1]**2+U[2-1]**2)+U[3-1]**2+4*U[1-1]*U[2-1]+2*U[3-1]*(U[1-1]+U[2-1]),
+      12*U[2-1]**2+2*(U[1-1]**2+U[3-1]**2+U[1-1]*U[3-1])+6*U[2-1]*(U[1-1]+U[3-1]),
+      3*(U[2-1]**2+U[3-1]**2)+U[1-1]**2+4*U[2-1]*U[3-1]+2*U[1-1]*(U[2-1]+U[3-1])],
+  [3*(U[1-1]**2+U[3-1]**2)+U[2-1]**2+4*U[1-1]*U[3-1]+2*U[2-1]*(U[1-1]+U[3-1]),
+      3*(U[2-1]**2+U[3-1]**2)+U[1-1]**2+4*U[2-1]*U[3-1]+2*U[1-1]*(U[2-1]+U[3-1]),
+      12*U[3-1]**2+2*(U[1-1]**2+U[2-1]**2+U[1-1]*U[2-1])+6*U[3-1]*(U[1-1]+U[2-1])]])/60
     M = Area*(Eps*G.dot(G.T)-fac1+fac2)
     return M
     
@@ -76,7 +79,12 @@ def localj(vertices,U):
     return b 
 
 def f(x):
-    return numpy.zeros((x.shape[0],1))
+    volume_force = numpy.zeros((x.shape[0],1))
+    return volume_force
+
+def g(x):
+    stress = numpy.zeros((x.shape[0],1))
+    return stress
 
 coordinates = dat.read(os.path.join(directory,'coordinates.dat'),float)
 coordinates = coordinates[:,1:]
@@ -86,7 +94,7 @@ dirichlet = numpy.array(dat.read(os.path.join(directory,'dirichlet.dat'),float),
 dirichlet = dirichlet[:,1:]
 #neumann = numpy.array(dat.read(os.path.join(directory,'neumann.dat'),float),dtype = numpy.int) - 1
 #neumann = neumann[:,1:]
-#neumann= numpy.array()
+neumann= numpy.zeros((0,2))
 
 m = coordinates.shape[0]
 
@@ -100,14 +108,47 @@ for ii in range(50):
     
     for item in elements3:
         coords = coordinates[item,:]
+        
         kk,ll = numpy.c_[numpy.meshgrid(item,item)].transpose(0,2,1).reshape(2,-1)
-        A[kk,ll] += localdj(coords,U[item]).flatten()
-        b[item] += numpy.array([localj(coords,U[item])]).T
+        ldj = localdj(coords,U[item])
+        A[kk,ll] += ldj.flatten()
+        
+        lj = numpy.array([localj(coords,U[item])]).T
+        b[item] += lj
+        
         aa =  numpy.concatenate([[[1,1,1]],coords.T],0).T
         bb = numpy.linalg.det(aa)
-        cc = bb*f(coords.sum(0)/3)/6
+        cc = bb*f(numpy.array([coords.sum(0)])/3)/6
         b[item] += cc
-#    
+    
+    for item in neumann:
+        coords = coordinates[item,:]
+        dd = (numpy.linalg.norm(coords) + coords.dot(g(numpy.array([coords.sum(0)])/2)/2))
+        b[item] -= dd
+
+
+    #Dirichlet conditions
+    W = numpy.zeros((coordinates.shape[0],1))
+    W[numpy.unique(dirichlet)] = 0
+    
+    #Solving one Newton step
+    n = len(free_nodes)
+    kk,ll = numpy.c_[numpy.meshgrid(free_nodes,free_nodes)].transpose(0,2,1).reshape(2,-1)
+    A_free = A[kk,ll]
+    A_free = A_free.reshape(n,n)
+    b_free = b[free_nodes]
+    W[free_nodes] = numpy.linalg.solve(A_free,b_free)
+    U -= W
+    if numpy.linalg.norm(W) < 1e-10:
+        break
+
+#material = fea.Material(1e7,.3)
+
+import idealab_tools.plot_tris as pt
+pt.plot_tris(coordinates,elements3,face_colors = (1,0,0,1), draw_edges = True, edge_color=(0,0,0,1))
+
+#
+
 #    T = 1
 #    dt = 0.01
 #    N = int(T/dt)
