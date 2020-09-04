@@ -47,7 +47,7 @@ def error_check(output,filename,generate_new = False):
     else:
     
         with open(filename) as f:
-            baseline = yaml.load(f)
+            baseline = yaml.load(f,Loader=yaml.FullLoader)
             for key,value in baseline.items():
                 baseline[key] = numpy.array(baseline[key])
         

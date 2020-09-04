@@ -39,7 +39,7 @@ def save_mesh(mo,meshname):
     
 def load_mesh(meshname):
     with open(meshname) as f:
-        mo2 = yaml.load(f)
+        mo2 = yaml.load(f,Loader=yaml.FullLoader)
     cells = {}
     for key,value in mo2['cells'].items():
         cells[key] = numpy.array(*value)
